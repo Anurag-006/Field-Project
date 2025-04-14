@@ -1,6 +1,10 @@
-import PublicationCard from "../PublicationCard/PublicationCard";
+import {PublicationCard, IPublication} from "../PublicationCard/PublicationCard";
 
-const PublicationWindow = (props) => {
+interface IProps {
+    publications: IPublication[]
+}
+
+const PublicationWindow = (props: IProps) => {
     const data = props.publications;
 
   return (

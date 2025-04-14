@@ -1,8 +1,9 @@
 import { Button } from "../ui/button"
 import { useState } from "react"
 import PublicationWindow from "../PublicationWindow/PublicationWindow";
+import { IPublication } from "../PublicationCard/PublicationCard";
 
-const dummyData = [
+const dummyData: IPublication[] = [
   {
     title: "Exploring the Future of AI",
     description: "A deep dive into the potential and challenges of artificial intelligence.",

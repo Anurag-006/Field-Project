@@ -1,5 +1,10 @@
+interface IPublication {
+    title: string;
+    description: string;
+    link: string;
+}
 
-const PublicationCard = (props) => {
+const PublicationCard = (props: IPublication) => {
   return (
     <div className="bg-white dark:bg-gray-500 rounded-lg shadow-md p-4 mb-4">
       <h2 className="text-xl font-bold mb-2">{props.title}</h2>
@@ -11,4 +16,4 @@ const PublicationCard = (props) => {
   )
 }
 
-export default PublicationCard
+export {PublicationCard, type IPublication}

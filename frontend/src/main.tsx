@@ -7,6 +7,7 @@ import Home from './components/Home/Home.tsx'
 import Login from './components/Login/Login.tsx'
 import Profile from './components/Profile/Profile.tsx'
 import { ThemeProvider } from "@/components/theme-provider"
+import PublicationForm from './components/PublicationForm/PublicationForm.tsx'
 
 const router = createBrowserRouter([
   {
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
       {
         path: '/profile',
         element: <Profile />,
+      },
+      {
+        path: '/publicationform',
+        element: <PublicationForm />,
       }
     ]
   }
