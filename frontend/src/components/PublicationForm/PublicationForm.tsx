@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Form,
   FormControl,
@@ -20,109 +20,139 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useForm } from "react-hook-form";
 // import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Toaster, toast } from "sonner"
+import { Toaster, toast } from "sonner";
 
+const formSchema = z
+  .object({
+    // Basic Information
+    email: z.string().email({ message: "Invalid email address" }),
+    facultyName: z.string().min(1, { message: "Faculty name is required" }),
+    employeeId: z.string().min(1, { message: "Employee ID is required" }),
+    rigGroupNumber: z
+      .string()
+      .min(1, { message: "RIG Group number is required" }),
+    academicYear: z.string().min(1, { message: "Academic year is required" }),
 
-const formSchema = z.object({
-  // Basic Information
-  email: z.string().email({ message: "Invalid email address" }),
-  facultyName: z.string().min(1, { message: "Faculty name is required" }),
-  employeeId: z.string().min(1, { message: "Employee ID is required" }),
-  rigGroupNumber: z.string().min(1, { message: "RIG Group number is required" }),
-  academicYear: z.string().min(1, { message: "Academic year is required" }),
+    // Author Information
+    author1Name: z.string().min(1, { message: "Author 1 name is required" }),
+    author1Affiliation: z
+      .string()
+      .min(1, { message: "Author 1 affiliation is required" }),
+    author2Name: z.string().min(1, { message: "Author 2 name is required" }),
+    author2Affiliation: z
+      .string()
+      .min(1, { message: "Author 2 affiliation is required" }),
+    author3Name: z
+      .string()
+      .min(1, { message: "Author 3 name or NIL is required" }),
+    author3Affiliation: z
+      .string()
+      .min(1, { message: "Author 3 affiliation or NIL is required" }),
+    author4Name: z.string().optional(),
+    author4Affiliation: z.string().optional(),
+    author5Name: z.string().optional(),
+    author5Affiliation: z.string().optional(),
+    author6Name: z.string().optional(),
+    author6Affiliation: z.string().optional(),
 
-  // Author Information
-  author1Name: z.string().min(1, { message: "Author 1 name is required" }),
-  author1Affiliation: z.string().min(1, { message: "Author 1 affiliation is required" }),
-  author2Name: z.string().min(1, { message: "Author 2 name is required" }),
-  author2Affiliation: z.string().min(1, { message: "Author 2 affiliation is required" }),
-  author3Name: z.string().min(1, { message: "Author 3 name or NIL is required" }),
-  author3Affiliation: z.string().min(1, { message: "Author 3 affiliation or NIL is required" }),
-  author4Name: z.string().optional(),
-  author4Affiliation: z.string().optional(),
-  author5Name: z.string().optional(),
-  author5Affiliation: z.string().optional(),
-  author6Name: z.string().optional(),
-  author6Affiliation: z.string().optional(),
+    // Publication Type and Common Fields
+    facultyAuthorPosition: z
+      .string()
+      .min(1, { message: "Faculty author position is required" }),
+    belongsToStudent: z
+      .string()
+      .min(1, { message: "Please specify if paper belongs to student" }),
+    publicationType: z.enum(["Journal", "Conference", "BookChapter", "Book"], {
+      required_error: "Publication type is required",
+    }),
 
-  // Publication Type and Common Fields
-  facultyAuthorPosition: z.string().min(1, { message: "Faculty author position is required" }),
-  belongsToStudent: z.string().min(1, { message: "Please specify if paper belongs to student" }),
-  publicationType: z.enum(["Journal", "Conference", "BookChapter", "Book"], {
-    required_error: "Publication type is required",
-  }),
+    // Journal Fields
+    journalName: z.string().optional(),
+    journalQuartile: z.string().optional(),
+    paperTitle: z.string().optional(),
+    volumeIssue: z.string().optional(),
+    pageNumbers: z.string().optional(),
+    publicationMonth: z.string().optional(),
+    publicationYear: z.string().optional(),
+    indexing: z.string().optional(),
+    issnNumber: z.string().optional(),
+    impactFactor: z.string().optional(),
+    publisherName: z.string().optional(),
+    paperLink: z.string().optional(),
+    journalLink: z.string().optional(),
+    indexingDuration: z.string().optional(),
 
-  // Journal Fields
-  journalName: z.string().optional(),
-  journalQuartile: z.string().optional(),
-  paperTitle: z.string().optional(),
-  volumeIssue: z.string().optional(),
-  pageNumbers: z.string().optional(),
-  publicationMonth: z.string().optional(),
-  publicationYear: z.string().optional(),
-  indexing: z.string().optional(),
-  issnNumber: z.string().optional(),
-  impactFactor: z.string().optional(),
-  publisherName: z.string().optional(),
-  paperLink: z.string().url().optional(),
-  journalLink: z.string().url().optional(),
-  indexingDuration: z.string().optional(),
+    // Conference Fields
+    conferenceName: z.string().optional(),
+    conferenceTitle: z.string().optional(),
+    organizedInstitute: z.string().optional(),
+    conferencePlace: z.string().optional(),
+    conferenceMonth: z.string().optional(),
+    conferenceYear: z.string().optional(),
+    conferencePublished: z.string().optional(),
+    participationCertificate: z.any().optional(), // For file upload
+    conferenceLink: z.string().optional(),
+    conferencePublishedStatus: z
+      .enum(["published", "not-published"])
+      .optional(),
+    conferencePublishDuration: z.string().optional(),
 
-  // Conference Fields
-  conferenceName: z.string().optional(),
-  conferenceTitle: z.string().optional(),
-  organizedInstitute: z.string().optional(),
-  conferencePlace: z.string().optional(),
-  conferenceMonth: z.string().optional(),
-  conferenceYear: z.string().optional(),
-  conferencePublished: z.string().optional(),
-  participationCertificate: z.any().optional(), // For file upload
-  conferenceLink: z.string().url().optional(),
-  conferencePublishedStatus: z.enum(["published", "not-published"]).optional(),
-  conferencePublishDuration: z.string().optional(),
+    // Book Chapter Fields
+    bookChapterTitle: z.string().optional(),
+    paperTitleInChapter: z.string().optional(),
+    proceedingsTitle: z.string().optional(),
+    presentationMonth: z.string().optional(),
+    presentationYear: z.string().optional(),
+    bookChapterPublished: z.string().optional(),
+    bookChapterPublishedStatus: z
+      .enum(["published", "not-published"])
+      .optional(),
+    bookChapterLink: z.string().optional(),
+    doiNumber: z.string().optional(),
+    bookChapterPublishDuration: z.string().optional(),
 
-  // Book Chapter Fields
-  bookChapterTitle: z.string().optional(),
-  paperTitleInChapter: z.string().optional(),
-  proceedingsTitle: z.string().optional(),
-  presentationMonth: z.string().optional(),
-  presentationYear: z.string().optional(),
-  bookChapterPublished: z.string().optional(),
-  bookChapterPublishedStatus: z.enum(["published", "not-published"]).optional(),
-  bookChapterLink: z.string().url().optional(),
-  doiNumber: z.string().optional(),
-  bookChapterPublishDuration: z.string().optional(),
+    // File Upload Fields
+    fullPaperFile: z.any().optional(), // For file upload
+    indexingProofFile: z.any().optional(), // For file upload
 
-  // File Upload Fields
-  fullPaperFile: z.any().optional(), // For file upload
-  indexingProofFile: z.any().optional(), // For file upload
-
-  // Book Fields
-  bookTitle: z.string().optional(),
-  isbn: z.string().optional(),
-  bookPublisher: z.string().optional(),
-  bookPublicationYear: z.string().optional(),
-  bookLink: z.string().url().optional(),
-}).refine((data) => {
-  // Add conditional validation based on publication type
-  switch (data.publicationType) {
-    case "Journal":
-      return !!(data.journalName && data.paperTitle && data.indexing);
-    case "Conference":
-      return !!(data.conferenceName && data.conferenceTitle && data.organizedInstitute);
-    case "BookChapter":
-      return !!(data.bookChapterTitle && data.paperTitleInChapter);
-    case "Book":
-      return !!(data.bookTitle && data.isbn);
-    default:
-      return true;
-  }
-}, {
-  message: "Please fill in all required fields for the selected publication type"
-});
+    // Book Fields
+    bookTitle: z.string().optional(),
+    bookPublisher: z.string().optional(),
+    bookPublicationYear: z.string().optional(),
+    bookPublicationMonth: z.string().optional(),
+    bookLink: z.string().optional(),
+    modeOfPublication: z.enum(["Online", "Offline"], {
+      required_error: "Mode of publication is required",
+    }).optional(),
+  })
+  .refine(
+    (data) => {
+      // Add conditional validation based on publication type
+      switch (data.publicationType) {
+        case "Journal":
+          return !!(data.journalName && data.paperTitle && data.indexing);
+        case "Conference":
+          return !!(
+            data.conferenceName &&
+            data.conferenceTitle &&
+            data.organizedInstitute
+          );
+        case "BookChapter":
+          return !!(data.bookChapterTitle && data.paperTitleInChapter);
+        case "Book":
+          return !!(data.bookTitle && data.bookPublisher);
+        default:
+          return true;
+      }
+    },
+    {
+      message:
+        "Please fill in all required fields for the selected publication type",
+    }
+  );
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -193,9 +223,10 @@ interface BookChapterDetails {
 
 interface BookDetails {
   bookTitle: string | undefined;
-  isbn: string | undefined;
   bookPublisher: string | undefined;
   bookPublicationYear: string | undefined;
+  bookPublicationMonth: string | undefined;
+  modeOfPublication: string | undefined;
   bookLink: string | undefined;
 }
 
@@ -217,8 +248,8 @@ interface PublicationData {
 
 const PublicationForm = () => {
   const [publicationType, setPublicationType] = useState("");
-  const [conferencePublished, setConferencePublished] = useState("Published");
-  const [bookChapterPublished, setBookChapterPublished] = useState("Published");
+  // const [conferencePublished, setConferencePublished] = useState("Published");
+  // const [bookChapterPublished, setBookChapterPublished] = useState("Published");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -243,7 +274,7 @@ const PublicationForm = () => {
       author5Affiliation: "",
       author6Name: "",
       author6Affiliation: "",
-      
+
       // Publication Type
       facultyAuthorPosition: "",
       belongsToStudent: "",
@@ -291,114 +322,85 @@ const PublicationForm = () => {
 
       // Book Fields
       bookTitle: "",
-      isbn: "",
       bookPublisher: "",
       bookPublicationYear: "",
+      bookPublicationMonth: "",
+      modeOfPublication: undefined,
       bookLink: "",
 
       // File Fields
       fullPaperFile: undefined,
       indexingProofFile: undefined,
-    }
+    },
   });
 
   // Add this after your form initialization
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      console.log("Form values changed:", value);
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
+  // useEffect(() => {
+  //   const subscription = form.watch((value) => {
+  //     // console.log("Form values changed:", value);
+  //   });
+  //   return () => subscription.unsubscribe();
+  // }, [form]);
 
   const onSubmit = async (data: FormValues) => {
+    console.log("Inside onSubmit Function");
+    
     try {
-      // First, let's log the raw form data
-      console.log("Raw Form Data:", data);
-  
-      // Validate the data
-      const validatedData = formSchema.parse(data);
-      
-      // Create publication data object
+      // Create base publication data
       let publicationData: PublicationData = {
-        email: validatedData.email,
-        facultyName: validatedData.facultyName,
-        employeeId: validatedData.employeeId,
-        rigGroupNumber: validatedData.rigGroupNumber,
-        academicYear: validatedData.academicYear,
+        email: data.email,
+        facultyName: data.facultyName,
+        employeeId: data.employeeId,
+        rigGroupNumber: data.rigGroupNumber,
+        academicYear: data.academicYear,
         authors: [
-          {
-            name: validatedData.author1Name,
-            affiliation: validatedData.author1Affiliation,
-          },
-          {
-            name: validatedData.author2Name,
-            affiliation: validatedData.author2Affiliation,
-          },
-          {
-            name: validatedData.author3Name,
-            affiliation: validatedData.author3Affiliation,
-          },
-          ...(validatedData.author4Name ? [{
-            name: validatedData.author4Name,
-            affiliation: validatedData.author4Affiliation ?? "",
-          }] : []),
-          ...(validatedData.author5Name ? [{
-            name: validatedData.author5Name,
-            affiliation: validatedData.author5Affiliation ?? "",
-          }] : []),
-          ...(validatedData.author6Name ? [{
-            name: validatedData.author6Name,
-            affiliation: validatedData.author6Affiliation ?? "",
-          }] : []),
-        ].filter((author): author is Author => author !== null),
-        facultyAuthorPosition: validatedData.facultyAuthorPosition,
-        belongsToStudent: validatedData.belongsToStudent,
-        publicationType: validatedData.publicationType,
+          { name: data.author1Name, affiliation: data.author1Affiliation },
+          { name: data.author2Name, affiliation: data.author2Affiliation },
+          { name: data.author3Name, affiliation: data.author3Affiliation },
+          ...(data.author4Name ? [{ name: data.author4Name, affiliation: data.author4Affiliation || "" }] : []),
+          ...(data.author5Name ? [{ name: data.author5Name, affiliation: data.author5Affiliation || "" }] : []),
+          ...(data.author6Name ? [{ name: data.author6Name, affiliation: data.author6Affiliation || "" }] : [])
+        ],
+        facultyAuthorPosition: data.facultyAuthorPosition,
+        belongsToStudent: data.belongsToStudent,
+        publicationType: data.publicationType
       };
-  
-      // Add publication type specific details
-      if (validatedData.publicationType === "Journal") {
-        publicationData.journalDetails = {
-          journalName: validatedData.journalName,
-          journalQuartile: validatedData.journalQuartile,
-          paperTitle: validatedData.paperTitle,
-          volumeIssue: validatedData.volumeIssue,
-          pageNumbers: validatedData.pageNumbers,
-          publicationMonth: validatedData.publicationMonth,
-          publicationYear: validatedData.publicationYear,
-          indexing: validatedData.indexing,
-          issnNumber: validatedData.issnNumber,
-          impactFactor: validatedData.impactFactor,
-          publisherName: validatedData.publisherName,
-          paperLink: validatedData.paperLink,
-          journalLink: validatedData.journalLink
-        };
+
+      // Add type-specific details
+      switch (data.publicationType) {
+        case "Journal":
+          publicationData.journalDetails = {
+            journalName: data.journalName,
+            journalQuartile: data.journalQuartile,
+            paperTitle: data.paperTitle,
+            volumeIssue: data.volumeIssue,
+            pageNumbers: data.pageNumbers,
+            publicationMonth: data.publicationMonth,
+            publicationYear: data.publicationYear,
+            indexing: data.indexing,
+            issnNumber: data.issnNumber,
+            impactFactor: data.impactFactor,
+            publisherName: data.publisherName,
+            paperLink: data.paperLink,
+            journalLink: data.journalLink
+          };
+          break;
+
+        // ...rest of your switch cases remain the same
       }
-  
-      // Log the structured data
+
       console.log("Structured Publication Data:", publicationData);
-      
-      // Show success toast
-      toast.success("Form data logged to console", {
-        description: "Check browser console (F12) for details"
-      });
-  
+      toast.success("Form submitted successfully");
+
     } catch (error) {
-      // Log and show any errors
-      if (error instanceof z.ZodError) {
-        console.error("Validation Errors:", error.errors);
-        toast.error("Validation failed", {
-          description: error.errors.map(e => e.message).join(", ")
-        });
-      } else {
-        console.error("Error:", error);
-        toast.error("An error occurred");
-      }
+      console.error("Form submission error:", error);
+      toast.error("Submission failed", {
+        description: error instanceof Error ? error.message : "Unknown error occurred"
+      });
     }
   };
-  
 
-  const handlePublicationTypeChange = (value:any) => {
+  const handlePublicationTypeChange = (value: any) => {
     setPublicationType(value);
     form.setValue("publicationType", value);
   };
@@ -413,7 +415,9 @@ const PublicationForm = () => {
           </h1>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit, (error) => {
+              console.log("Form errors: ", error)
+            })} className="space-y-8">
               <Card className="shadow-md">
                 <CardHeader>
                   <CardTitle className="text-2xl">Basic Information</CardTitle>
@@ -858,7 +862,9 @@ const PublicationForm = () => {
                     name="belongsToStudent"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Does this paper belong to student?*</FormLabel>
+                        <FormLabel>
+                          Does this paper belong to student?*
+                        </FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -906,7 +912,9 @@ const PublicationForm = () => {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="Journal">Journal</SelectItem>
-                            <SelectItem value="Conference">Conference</SelectItem>
+                            <SelectItem value="Conference">
+                              Conference
+                            </SelectItem>
                             <SelectItem value="BookChapter">
                               Book Chapter
                             </SelectItem>
@@ -938,9 +946,6 @@ const PublicationForm = () => {
                               <Input
                                 {...field}
                                 placeholder="Enter journal name"
-                                className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                         bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                         focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               />
                             </FormControl>
                             <FormMessage />
@@ -948,266 +953,302 @@ const PublicationForm = () => {
                         )}
                       />
 
-                      <FormItem>
-                        <FormLabel>Quartile of Journal*</FormLabel>
-                        <Select>
-                          <FormControl>
-                            <SelectTrigger
-                              className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                           bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      <FormField
+                        control={form.control}
+                        name="journalQuartile"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Quartile of Journal*</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
                             >
-                              <SelectValue placeholder="Select Quartile" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Q1">Q1</SelectItem>
-                            <SelectItem value="Q2">Q2</SelectItem>
-                            <SelectItem value="Q3">Q3</SelectItem>
-                            <SelectItem value="Q4">Q4</SelectItem>
-                            <SelectItem value="No Quartile assigned">
-                              No Quartile assigned
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Quartile" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Q1">Q1</SelectItem>
+                                <SelectItem value="Q2">Q2</SelectItem>
+                                <SelectItem value="Q3">Q3</SelectItem>
+                                <SelectItem value="Q4">Q4</SelectItem>
+                                <SelectItem value="No Quartile assigned">
+                                  No Quartile assigned
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
-                    <FormItem>
-                      <FormLabel>Title of the Paper*</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter paper title"
-                          className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormField
+                      control={form.control}
+                      name="paperTitle"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title of the Paper*</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter paper title" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <FormItem>
-                        <FormLabel>Volume and Issue no*</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., Vol. 10, Issue 2"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                     focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormField
+                        control={form.control}
+                        name="volumeIssue"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Volume and Issue no*</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                placeholder="e.g., Vol. 10, Issue 2"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                      <FormItem>
-                        <FormLabel>Page No.s*</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., 123-145"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                     focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormField
+                        control={form.control}
+                        name="pageNumbers"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Page No.s*</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., 123-145" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                      <FormItem>
-                        <FormLabel>Month of publication*</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., January"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                     focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormField
+                        control={form.control}
+                        name="publicationMonth"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Month of publication*</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., January" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormItem>
-                        <FormLabel>Year of publication*</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., 2024"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-
-                      <FormItem>
-                        <FormLabel>Indexing*</FormLabel>
-                        <Select>
+                    <FormField
+                      control={form.control}
+                      name="publicationYear"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Year of publication*</FormLabel>
                           <FormControl>
-                            <SelectTrigger
-                              className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                           bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                              <SelectValue placeholder="Select Indexing" />
-                            </SelectTrigger>
+                            <Input {...field} placeholder="e.g., 2024" />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Web of Science">
-                              Web of Science
-                            </SelectItem>
-                            <SelectItem value="UGC">UGC</SelectItem>
-                            <SelectItem value="IEEE Transactions">
-                              IEEE Transactions
-                            </SelectItem>
-                            <SelectItem value="SCI">SCI</SelectItem>
-                            <SelectItem value="SCOPUS">SCOPUS</SelectItem>
-                            <SelectItem value="Scopus with Web of Science">
-                              Scopus with Web of Science
-                            </SelectItem>
-                            <SelectItem value="Google Scholar">
-                              Google Scholar
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormItem>
-                        <FormLabel>ISSN number*</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter ISSN number"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                    <FormField
+                      control={form.control}
+                      name="indexing"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Indexing*</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select Indexing" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Web of Science">
+                                Web of Science
+                              </SelectItem>
+                              <SelectItem value="UGC">UGC</SelectItem>
+                              <SelectItem value="IEEE Transactions">
+                                IEEE Transactions
+                              </SelectItem>
+                              <SelectItem value="SCI">SCI</SelectItem>
+                              <SelectItem value="SCOPUS">SCOPUS</SelectItem>
+                              <SelectItem value="Scopus with Web of Science">
+                                Scopus with Web of Science
+                              </SelectItem>
+                              <SelectItem value="Google Scholar">
+                                Google Scholar
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                      <FormItem>
-                        <FormLabel>Impact Factor*</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter impact factor"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    </div>
-
-                    <FormItem>
-                      <FormLabel>Publisher Name*</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter publisher name"
-                          className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormItem>
-                        <FormLabel>Link of Paper*</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter paper link"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-
-                      <FormItem>
-                        <FormLabel>Link of Journal*</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter journal link"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    </div>
-
-                    <div className="space-y-4">
-                      <FormItem>
-                        <FormLabel>
-                          Full Paper of Published Proof (PDF)*
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="file"
-                            accept=".pdf"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-
-                      <FormItem>
-                        <FormLabel>
-                          Indexing Proof of that Paper if already indexed (PDF)
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="file"
-                            accept=".pdf"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-
-                      <FormItem>
-                        <FormLabel>
-                          Approximate duration to get Indexed*
-                        </FormLabel>
-                        <Select>
+                    <FormField
+                      control={form.control}
+                      name="issnNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>ISSN number*</FormLabel>
                           <FormControl>
-                            <SelectTrigger
-                              className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                           bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                              <SelectValue placeholder="Select duration" />
-                            </SelectTrigger>
+                            <Input {...field} placeholder="Enter ISSN number" />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="1 Month">1 Month</SelectItem>
-                            <SelectItem value="3 Months">3 Months</SelectItem>
-                            <SelectItem value="6 Months">6 Months</SelectItem>
-                            <SelectItem value="Indexed proof attached above">
-                              Indexed proof attached above
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          If not Indexed in specified months, it will redirect to
-                          Google scholar Journal list
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="impactFactor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Impact Factor*</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Enter impact factor"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="publisherName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Publisher Name*</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Enter publisher name"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="paperLink"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Link of Paper*</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter paper URL" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="journalLink"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Link of Journal*</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter journal URL" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="fullPaperFile"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Full Paper of Published Proof (PDF)*
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="file"
+                              accept=".pdf"
+                              onChange={(e) =>
+                                field.onChange(e.target.files?.[0])
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="indexingProofFile"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Indexing Proof (PDF)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="file"
+                              accept=".pdf"
+                              onChange={(e) =>
+                                field.onChange(e.target.files?.[0])
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="indexingDuration"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Approximate duration to get Indexed*
+                          </FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select duration" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="1 Month">1 Month</SelectItem>
+                              <SelectItem value="3 Months">3 Months</SelectItem>
+                              <SelectItem value="6 Months">6 Months</SelectItem>
+                              <SelectItem value="Indexed proof attached above">
+                                Indexed proof attached above
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            If not Indexed in specified months, it will redirect
+                            to Google scholar Journal list
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -1216,386 +1257,235 @@ const PublicationForm = () => {
               {publicationType === "Conference" && (
                 <Card className="shadow-md">
                   <CardHeader>
-                    <CardTitle className="text-2xl">Conference Details</CardTitle>
+                    <CardTitle className="text-2xl">
+                      Conference Details
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <FormItem>
-                      <FormLabel>Name of the Conference*</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter conference name"
-                          className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormField
+                      control={form.control}
+                      name="conferenceName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name of the Conference*</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Enter conference name"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <FormItem>
-                      <FormLabel>Title of the Conference Paper*</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter paper title"
-                          className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormField
+                      control={form.control}
+                      name="conferenceTitle"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title of the Conference Paper*</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter paper title" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <FormItem>
-                      <FormLabel>Organized Institute name*</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter institute name"
-                          className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormField
+                      control={form.control}
+                      name="organizedInstitute"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Organized Institute name*</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Enter institute name"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <FormItem>
-                      <FormLabel>Place of conference held*</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter conference location"
-                          className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormField
+                      control={form.control}
+                      name="conferencePlace"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Place of conference held*</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Enter conference location"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormItem>
-                        <FormLabel>
-                          Month of conference held and Presented*
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., January"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormField
+                        control={form.control}
+                        name="conferenceMonth"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Month of conference held*</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., January" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                      <FormItem>
-                        <FormLabel>Year of conference held*</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., 2024"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                  bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                  focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormField
+                        control={form.control}
+                        name="conferenceYear"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Year of conference held*</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., 2024" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
-                    <FormItem>
-                      <FormLabel>Participation Certificate* (File)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="file"
-                          accept=".pdf"
-                          className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormField
+                      control={form.control}
+                      name="participationCertificate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Participation Certificate* (PDF)
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="file"
+                              accept=".pdf"
+                              onChange={(e) =>
+                                field.onChange(e.target.files?.[0])
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <FormItem>
-                      <FormLabel>Presented Paper Details*</FormLabel>
-                      <Tabs defaultValue="published" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="published">Published</TabsTrigger>
-                          <TabsTrigger value="not-published">
-                            Yet to get Published
-                          </TabsTrigger>
-                        </TabsList>
+                    <FormField
+                      control={form.control}
+                      name="conferencePublishedStatus"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Publication Status*</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="published">
+                                Published
+                              </SelectItem>
+                              <SelectItem value="not-published">
+                                Yet to be Published
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                        <TabsContent value="published" className="space-y-4 mt-4">
-                          <div className="space-y-4">
-                            <h3 className="text-lg font-medium">
-                              Publication and Indexing of Conference
-                            </h3>
-
+                    {/* Add conditional fields based on publication status */}
+                    {form.watch("conferencePublishedStatus") ===
+                      "published" && (
+                      <>
+                        {/* Published conference fields */}
+                        <FormField
+                          control={form.control}
+                          name="volumeIssue"
+                          render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Volume and issue Number*</FormLabel>
+                              <FormLabel>Volume and Issue Number*</FormLabel>
                               <FormControl>
                                 <Input
+                                  {...field}
                                   placeholder="Enter volume and issue"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
+                          )}
+                        />
 
+                        <FormField
+                          control={form.control}
+                          name="pageNumbers"
+                          render={({ field }) => (
                             <FormItem>
                               <FormLabel>Page Numbers*</FormLabel>
                               <FormControl>
-                                <Input
-                                  placeholder="e.g., 123-145"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
+                                <Input {...field} placeholder="e.g., 123-145" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
+                          )}
+                        />
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <FormItem>
-                                <FormLabel>Month of Publication*</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="e.g., January"
-                                    className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                          bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                          focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
+                        {/* Add other published conference fields... */}
+                      </>
+                    )}
 
-                              <FormItem>
-                                <FormLabel>Year of Publication*</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="e.g., 2024"
-                                    className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                          bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                          focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            </div>
-
-                            <FormItem>
-                              <FormLabel>Indexing*</FormLabel>
-                              <Select>
-                                <FormControl>
-                                  <SelectTrigger
-                                    className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                              bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                              focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  >
-                                    <SelectValue placeholder="Select Indexing" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="IEEE">IEEE</SelectItem>
-                                  <SelectItem value="Scopus">Scopus</SelectItem>
-                                  <SelectItem value="Web of Science">
-                                    Web of Science
-                                  </SelectItem>
-                                  <SelectItem value="Scopus & Web of Science">
-                                    Scopus & Web of Science
-                                  </SelectItem>
-                                  <SelectItem value="UGC">UGC</SelectItem>
-                                  <SelectItem value="Google Scholar">
-                                    Google Scholar
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>ISSN / ISBN Number*</FormLabel>
+                    {form.watch("conferencePublishedStatus") ===
+                      "not-published" && (
+                      <FormField
+                        control={form.control}
+                        name="conferencePublishDuration"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              Expected Publication Duration*
+                            </FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
                               <FormControl>
-                                <Input
-                                  placeholder="Enter ISSN/ISBN number"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select duration" />
+                                </SelectTrigger>
                               </FormControl>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>DOI Number or link*</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Enter DOI"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>Publisher Name*</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Enter publisher name"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>
-                                Link of Published Conference Paper*
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Enter paper link"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>Link of the Conference*</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Enter conference link"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>
-                                Full Paper of the Published Conference Paper
-                                (PDF)*
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="file"
-                                  accept=".pdf"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>
-                                Indexing Proof of the Conference Paper (If indexed
-                                already) (PDF)
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="file"
-                                  accept=".pdf"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>
-                                Approximate duration to get Indexing*
-                              </FormLabel>
-                              <Select>
-                                <FormControl>
-                                  <SelectTrigger
-                                    className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                              bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                              focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  >
-                                    <SelectValue placeholder="Select duration" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="1 Month">1 Month</SelectItem>
-                                  <SelectItem value="3 Months">
-                                    3 Months
-                                  </SelectItem>
-                                  <SelectItem value="6 Months">
-                                    6 Months
-                                  </SelectItem>
-                                  <SelectItem value="Already indexed attached above">
-                                    Already indexed attached above
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormDescription>
-                                If not Indexed in specified months, it will be
-                                moved to UGC list
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          </div>
-                        </TabsContent>
-
-                        <TabsContent
-                          value="not-published"
-                          className="space-y-4 mt-4"
-                        >
-                          <div className="space-y-4">
-                            <h3 className="text-lg font-medium">
-                              Conference Paper Publication details (Yet to get
-                              publish)
-                            </h3>
-
-                            <FormItem>
-                              <FormLabel>
-                                Approximate duration to get Published*
-                              </FormLabel>
-                              <Select>
-                                <FormControl>
-                                  <SelectTrigger
-                                    className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                              bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                              focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  >
-                                    <SelectValue placeholder="Select duration" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="1 Month">1 Month</SelectItem>
-                                  <SelectItem value="3 Months">
-                                    3 Months
-                                  </SelectItem>
-                                  <SelectItem value="6 Months">
-                                    6 Months
-                                  </SelectItem>
-                                  </SelectContent>
-                              </Select>
-                              <FormDescription>
-                                If not published in specified months, it will be
-                                removed from list
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                    </FormItem>
+                              <SelectContent>
+                                <SelectItem value="1 Month">1 Month</SelectItem>
+                                <SelectItem value="3 Months">
+                                  3 Months
+                                </SelectItem>
+                                <SelectItem value="6 Months">
+                                  6 Months
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              If not published in specified months, it will be
+                              removed from list
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                   </CardContent>
                 </Card>
               )}
@@ -1609,368 +1499,214 @@ const PublicationForm = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <FormItem>
-                      <FormLabel>Title of the Book Chapter*</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter book chapter title"
-                          className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormField
+                      control={form.control}
+                      name="bookChapterTitle"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title of the Book Chapter*</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Enter book chapter title"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <FormItem>
-                      <FormLabel>Title of the Paper in Book Chapter*</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter paper title"
-                          className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormField
+                      control={form.control}
+                      name="paperTitleInChapter"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Title of the Paper in Book Chapter*
+                          </FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter paper title" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <FormItem>
-                      <FormLabel>
-                        Title of the Proceedings of the Conference for this Book
-                        chapter (If any)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter proceedings title"
-                          className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormField
+                      control={form.control}
+                      name="proceedingsTitle"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Title of the Proceedings (If any)
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Enter proceedings title"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormItem>
-                        <FormLabel>
-                          Month of Presentation of paper if it through conference
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., January"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormField
+                        control={form.control}
+                        name="presentationMonth"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Month of Presentation</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., January" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                      <FormItem>
-                        <FormLabel>
-                          Year of Presentation of paper if it through conference
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., 2024"
-                            className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                                   focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormField
+                        control={form.control}
+                        name="presentationYear"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Year of Presentation</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., 2024" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
-                    <FormItem>
-                      <FormLabel>Book chapter details*</FormLabel>
-                      <Tabs defaultValue="published" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="published">Published</TabsTrigger>
-                          <TabsTrigger value="not-published">
-                            Yet to get Published
-                          </TabsTrigger>
-                        </TabsList>
+                    <FormField
+                      control={form.control}
+                      name="bookChapterPublishedStatus"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Publication Status*</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="published">
+                                Published
+                              </SelectItem>
+                              <SelectItem value="not-published">
+                                Yet to be Published
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                        <TabsContent value="published" className="space-y-4 mt-4">
-                          <div className="space-y-4">
-                            <h3 className="text-lg font-medium">
-                              Book Chapter Publication Details
-                            </h3>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <FormItem>
-                                <FormLabel>
-                                  Month of Publication of Book chapter*
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="e.g., January"
-                                    className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-
-                              <FormItem>
-                                <FormLabel>
-                                  Year of Publication of Book chapter*
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="e.g., 2024"
-                                    className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <FormItem>
-                                <FormLabel>Volume and Issue Number*</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Enter volume and issue"
-                                    className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-
-                              <FormItem>
-                                <FormLabel>Page Numbers*</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="e.g., 123-145"
-                                    className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                        bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                        focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            </div>
-
+                    {form.watch("bookChapterPublishedStatus") ===
+                      "published" && (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="doiNumber"
+                          render={({ field }) => (
                             <FormItem>
-                              <FormLabel>ISSN/ISBN Number*</FormLabel>
+                              <FormLabel>DOI Number*</FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Enter ISSN/ISBN number"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  {...field}
+                                  placeholder="Enter DOI number"
                                 />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
+                          )}
+                        />
 
+                        <FormField
+                          control={form.control}
+                          name="bookChapterLink"
+                          render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Indexing*</FormLabel>
-                              <Select>
-                                <FormControl>
-                                  <SelectTrigger
-                                    className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                            bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  >
-                                    <SelectValue placeholder="Select Indexing" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="Scopus">Scopus</SelectItem>
-                                  <SelectItem value="Web of Science">
-                                    Web of Science
-                                  </SelectItem>
-                                  <SelectItem value="Scopus & Web of Science">
-                                    Scopus & Web of Science
-                                  </SelectItem>
-                                  <SelectItem value="UGC">UGC</SelectItem>
-                                  <SelectItem value="Google Scholar">
-                                    Google Scholar
-                                  </SelectItem>
-                                  <SelectItem value="Other">Other</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>Publisher Name*</FormLabel>
+                              <FormLabel>Book Chapter Link*</FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Enter publisher name"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  {...field}
+                                  placeholder="Enter book chapter URL"
                                 />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
+                          )}
+                        />
 
+                        <FormField
+                          control={form.control}
+                          name="fullPaperFile"
+                          render={({ field }) => (
                             <FormItem>
-                              <FormLabel>DOI Number or Link*</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Enter DOI"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>
-                                Link of Published Paper in Book Chapter*
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Enter paper link"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>Link of Book Chapter*</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Enter book chapter link"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>
-                                Full length paper of all pages in Book Chapter*
-                              </FormLabel>
+                              <FormLabel>Full Paper (PDF)*</FormLabel>
                               <FormControl>
                                 <Input
                                   type="file"
                                   accept=".pdf"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  onChange={(e) =>
+                                    field.onChange(e.target.files?.[0])
+                                  }
                                 />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
+                          )}
+                        />
+                      </>
+                    )}
 
-                            <FormItem>
-                              <FormLabel>
-                                Approximate duration to get Indexing*
-                              </FormLabel>
-                              <Select>
-                                <FormControl>
-                                  <SelectTrigger
-                                    className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                            bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  >
-                                    <SelectValue placeholder="Select duration" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="1 Month">1 Month</SelectItem>
-                                  <SelectItem value="3 Months">
-                                    3 Months
-                                  </SelectItem>
-                                  <SelectItem value="6 Months">
-                                    6 Months
-                                  </SelectItem>
-                                  <SelectItem value="Already indexed">
-                                    Already indexed
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormDescription>
-                                If not Indexed in specified months, it will be
-                                moved to UGC list
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-
-                            <FormItem>
-                              <FormLabel>
-                                Indexing Proof of the Conference Paper (If indexed
-                                already)
-                              </FormLabel>
+                    {form.watch("bookChapterPublishedStatus") ===
+                      "not-published" && (
+                      <FormField
+                        control={form.control}
+                        name="bookChapterPublishDuration"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              Expected Publication Duration*
+                            </FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
                               <FormControl>
-                                <Input
-                                  type="file"
-                                  accept=".pdf"
-                                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select duration" />
+                                </SelectTrigger>
                               </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          </div>
-                        </TabsContent>
-
-                        <TabsContent
-                          value="not-published"
-                          className="space-y-4 mt-4"
-                        >
-                          <div className="space-y-4">
-                            <h3 className="text-lg font-medium">
-                              Book chapter details (Yet to get Published)
-                            </h3>
-
-                            <FormItem>
-                              <FormLabel>
-                                Approximate duration to get Published*
-                              </FormLabel>
-                              <FormDescription>
-                                If not published in below specified months, then
-                                it will be removed from list
-                              </FormDescription>
-                              <Select>
-                                <FormControl>
-                                  <SelectTrigger
-                                    className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
-                            bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  >
-                                    <SelectValue placeholder="Select duration" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="1 Month">1 Month</SelectItem>
-                                  <SelectItem value="3 Months">
-                                    3 Months
-                                  </SelectItem>
-                                  <SelectItem value="6 Months">
-                                    6 Months
-                                  </SelectItem>
-                                  </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                    </FormItem>
+                              <SelectContent>
+                                <SelectItem value="1 Month">1 Month</SelectItem>
+                                <SelectItem value="3 Months">
+                                  3 Months
+                                </SelectItem>
+                                <SelectItem value="6 Months">
+                                  6 Months
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                   </CardContent>
                 </Card>
               )}
+
               {/* Book Section */}
               {publicationType === "Book" && (
                 <Card className="shadow-md">
@@ -1978,21 +1714,113 @@ const PublicationForm = () => {
                     <CardTitle className="text-2xl">Book Details</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* Book form fields go here */}
-                    <FormItem>
-                      <FormLabel>Title of the Book*</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter book title"
-                          className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
+                    <FormField
+                      control={form.control}
+                      name="bookTitle"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title of the Book*</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter book title" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="bookPublisher"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Publisher Name*</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Enter publisher name"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="bookPublicationYear"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Year of Publication*</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="e.g., 2024" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="modeOfPublication"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mode of Publication*</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger
+                                className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 
                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white
                      focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                              >
+                                <SelectValue placeholder="Select mode of publication" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Online">Online</SelectItem>
+                              <SelectItem value="Offline">Offline</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    {/* Additional book-specific fields would go here */}
+                    <FormField
+                      control={form.control}
+                      name="bookLink"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Link of the Book*</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter book URL" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="fullPaperFile"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Book PDF*</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="file"
+                              accept=".pdf"
+                              onChange={(e) =>
+                                field.onChange(e.target.files?.[0])
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -2001,7 +1829,6 @@ const PublicationForm = () => {
               <div className="flex justify-center mt-6">
                 <Button
                   type="submit"
-                  onClick={form.handleSubmit(onSubmit)}
                   className="px-6 py-2 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded"
                 >
                   Submit Publication
