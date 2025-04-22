@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "backend for publications",
   "main": "dist/index.js",
-"scripts": {
-  "build": "rimraf dist && tsc && node copy-env.js",
-  "prestart": "npm run build",
-  "start": "node dist/server/index.js",
-  "predev": "npm run build",
-  "dev": "concurrently \"tsc -w\" \"nodemon dist/server/index.js\""
+  "scripts": {
+    "build": "rimraf dist && tsc && node copy-env.js",
+    "prestart": "npm run build",
+    "start": "node dist/server/index.js",
+    "predev": "npm run build",
+    "dev": "concurrently \"tsc -w\" \"nodemon dist/server/index.js\""
   },
   "keywords": [],
   "author": "",
@@ -27,6 +27,7 @@
     "concurrently": "^9.1.2",
     "nodemon": "^3.1.9",
     "rimraf": "^6.0.1",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }
