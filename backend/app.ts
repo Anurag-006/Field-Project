@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { userRouter } from "./apis/user.api.js";
+import { publicationRouter } from "./apis/publication.api.js";
 const app = express();
 
 
@@ -17,5 +18,5 @@ app.get("/test", (req, res) => {
 })
 
 app.use("/user",userRouter)
+app.use("/publication", publicationRouter)
 export {app};
-

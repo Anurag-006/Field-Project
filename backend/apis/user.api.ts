@@ -1,9 +1,3 @@
-import {app} from '../app.js';
-import { User } from '../models/user.model.js';
-import { ApiResponse } from '../utils/ApiResponse.js';
-import { ApiError } from '../utils/ApiError.js';
-
-import { Request, Response } from 'express';
 import { Router } from 'express';
 import { createUser,
     getAllUsers,

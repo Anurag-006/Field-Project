@@ -1,5 +1,5 @@
 import { Schema } from "mongoose";
-import { Publication } from "./publication.model";
+import { Publication } from "./publication.model.js";
 
 const bookChapterSchema = new Schema({
     bookChapterTitle: String,
