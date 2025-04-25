@@ -8,6 +8,34 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js"
 
+const createJournalPublication = asyncHandler(async (req, res) => {
+    const journalData = req.body;
+    const newJournal = await Journal.create(journalData);
+
+    if (!newJournal) {
+        throw new ApiError(400, "Unable To Create Journal");
+    }
+
+    const userId= journalData.user;
+    const publicationId = newJournal._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User Not Found");
+    }
+    const publication = await Publication.findById(publicationId);
+    if (!publication) {
+        throw new ApiError(404, "Publication Not Found");
+    }
+    
+    user.publications.push(publicationId);
+    await user.save();
+
+    res
+    .status(200)
+    .json(new ApiResponse(200, newJournal, "Journal Added Succesfully"));
+});
+
 const createConferencePublication = asyncHandler(async (req, res) => {
     const conferenceData = req.body;
     const newConference = await Conference.create(conferenceData);
@@ -168,35 +196,6 @@ const updatePublication = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, publication, "Publication Updated Succesfully"));
 });
-
-const createJournalPublication = asyncHandler(async (req, res) => {
-    const journalData = req.body;
-    const newJournal = await Journal.create(journalData);
-
-    if (!newJournal) {
-        throw new ApiError(400, "Unable To Create Journal");
-    }
-
-    const userId= journalData.user;
-    const publicationId = newJournal._id;
-
-    const user = await User.findById(userId);
-    if (!user) {
-        throw new ApiError(404, "User Not Found");
-    }
-    const publication = await Publication.findById(publicationId);
-    if (!publication) {
-        throw new ApiError(404, "Publication Not Found");
-    }
-    
-    user.publications.push(publicationId);
-    await user.save();
-
-    res
-    .status(200)
-    .json(new ApiResponse(200, newJournal, "Journal Added Succesfully"));
-});
-
 
 export {
     createConferencePublication,

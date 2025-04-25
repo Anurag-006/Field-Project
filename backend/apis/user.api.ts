@@ -1,10 +1,20 @@
 import { Router } from 'express';
-import { createUser,
+import {
+    createUser,
     getAllUsers,
     getUserById,
     updateUser,
     deleteUser,
-    getUserPublications } from '../controllers/user.controller.js';
+    getUserPublications,
+    getUserPublicationsByType,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    changeCurrentPassword,
+
+} from '../controllers/user.controller.js';
+
+import { verifyJWT } from '../middlewares/auth.middleware.js';
 
 const userRouter = Router();
 
@@ -14,5 +24,10 @@ userRouter.get('/:id', getUserById);
 userRouter.put('/:id', updateUser);
 userRouter.delete('/:id', deleteUser);
 userRouter.get('/:id/publications', getUserPublications);
+userRouter.get('/:id/publications/:type', getUserPublicationsByType);
+userRouter.post('/login', verifyJWT, loginUser);
+userRouter.post('/logout', verifyJWT, logoutUser);
+userRouter.post('/refresh-token', verifyJWT, refreshAccessToken);
+userRouter.post('/change-password', verifyJWT, changeCurrentPassword);
 
 export { userRouter };

@@ -3,9 +3,54 @@ import { Publication } from "../models/publication.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
-import { Types } from "mongoose";
+import { Types, Schema } from "mongoose";
+import jwt from "jsonwebtoken";
+import { NextFunction, Request, Response } from "express";
+import { IUser, IUserMethods } from "../types/user.types.js";
 
-const createUser = asyncHandler(async (req, res) => {
+
+interface DecodedToken extends jwt.JwtPayload {
+    _id: string;
+    email: string;
+    role: string;
+    employeeId: string;
+}
+
+interface AuthRequest extends Request {
+    user?: IUser;
+  }
+
+const options = {
+    httpOnly: true,
+    secure: true,
+};
+
+const generateAccessAndRefreshTokens = async (userId: Types.ObjectId) => {
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new ApiError(404, "User Not Found");
+        }
+        if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
+            throw new ApiError(500, "Token secrets are not defined");
+        }
+        const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
+
+        user.refreshToken = refreshToken;
+
+        await user.save({ validateBeforeSave: false });
+
+        return { accessToken, refreshToken };
+    } catch (error) {
+        throw new ApiError(
+            500,
+            "Something went wrong while generating Request and Access Tokens"
+        );
+    }
+};
+
+const createUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const userData = req.body;
     const newUser = await User.create(userData);
 
@@ -16,6 +61,156 @@ const createUser = asyncHandler(async (req, res) => {
     res
         .status(200)
         .json(new ApiResponse(200, newUser, "User Added Succesfully"));
+});
+
+const loginUser = asyncHandler(async (req, res) => {
+    // get username and password from req (Frontend)
+
+
+    const userDetails = req.body;
+
+    // verify Username
+    const user = await User.findOne({ employeeId: userDetails.employeeId });
+    if (!user) {
+        throw new ApiError(404, "User Not Found");
+    }
+
+    // verify Password
+    const isUserPasswordCorrect = await user.isPasswordCorrect(
+        userDetails.password
+    );
+    if (!isUserPasswordCorrect) {
+        throw new ApiError(402, "Incorrect login credentials");
+    }
+
+    // if username and password match generate Access Token
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+        user._id
+    );
+
+    // give user the access token to continue and save it in a cookie
+
+    const loggedInUser = await User.findById(user._id).select(
+        "-password -refreshToken"
+    );
+
+    // return response.
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    user: loggedInUser,
+                    accessToken,
+                    refreshToken,
+                },
+                "User logged In successfully"
+            )
+        );
+});
+
+const logoutUser = asyncHandler(async (req: AuthRequest, res) => {
+    await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $unset: {
+                refreshToken: 1,
+            },
+        },
+        {
+            new: true,
+        }
+    );
+
+    return res
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, {}, "User Logged Out"));
+});
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    // Fetch refresh token from user from cookies or req
+    const incommingRefreshToken =
+        req.cookies?.refreshToken || req.body.refreshToken;
+    if (!incommingRefreshToken) {
+        throw new ApiError(401, "No Refresh Token");
+    }
+    try {
+        if (!process.env.REFRESH_TOKEN_SECRET) {
+            throw new ApiError(500, "Refresh Token Secret is not defined");
+        }
+        // Check if refresh token matches
+        const decodedToken = jwt.verify(
+            incommingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        ) as DecodedToken;
+        if (!decodedToken) {
+            throw new ApiError(401, "Invalid refresh token");
+        }
+        const user = await User.findById(decodedToken?._id);
+
+        if (!user) {
+            throw new ApiError(401, "Invalid Refresh Token");
+        }
+
+        if (incommingRefreshToken !== user.refreshToken) {
+            throw new ApiError(401, "Unauthorized access");
+        }
+        // generate new refresh token and update in db
+
+        const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+            user._id
+        );
+
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", refreshToken, options)
+            .json(
+                new ApiResponse(
+                    200,
+                    { accessToken, refreshToken },
+                    "Access Token Refreshed"
+                )
+            );
+    } catch (error: any) {
+        throw new ApiError(400, error?.message || "Invalid Refresh Token");
+    }
+});
+
+const changeCurrentPassword = asyncHandler(async (
+    req: AuthRequest, 
+    res: Response,
+) => {
+    // get old and new passwords from frontend
+    const { oldPassword, newPassword } = req.body;
+
+    // verify Them
+
+
+    const user = await User.findById(req.user?._id);
+
+    if (!user) {
+        throw new ApiError(400, "User not Logged In");
+    }
+
+    const isUserPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+    if (!isUserPasswordCorrect) {
+        throw new ApiError(401, "Incorrect Password");
+    }
+
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "User Password Changed Succesfully"));
 });
 
 const getAllUsers = asyncHandler(async (req, res) => {
@@ -32,6 +227,9 @@ const getAllUsers = asyncHandler(async (req, res) => {
 
 const getUserById = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    if (!Types.ObjectId.isValid(id)) {
+        throw new ApiError(400, "Invalid user ID format");
+    }
     const user = await User.findById(id).populate("publications");
     if (!user) {
         throw new ApiError(404, "User Not Found");
@@ -89,10 +287,16 @@ const getUserPublications = asyncHandler(async (req, res) => {
 const addPublicationToUser = asyncHandler(async (req, res) => {
     const { userId } = req.params;
     const { publicationId } = req.body;
+
+    if (!Types.ObjectId.isValid(userId) || !Types.ObjectId.isValid(publicationId)) {
+        throw new ApiError(400, "Invalid ID format");
+    }
+
     const user = await User.findById(userId);
     if (!user) {
         throw new ApiError(404, "User Not Found");
     }
+
     const publication = await Publication.findById(publicationId);
     if (!publication) {
         throw new ApiError(404, "Publication Not Found");
@@ -177,4 +381,11 @@ export {
     removePublicationFromUser,
     getUserPublicationsByType,
     getUserPublicationById,
+    IUser,
+    IUserMethods,
+    generateAccessAndRefreshTokens,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    changeCurrentPassword,
 };
