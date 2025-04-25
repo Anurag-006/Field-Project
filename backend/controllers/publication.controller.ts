@@ -6,6 +6,7 @@ import { Book } from "../models/book.model.js";
 import { Publication } from "../models/publication.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
+import { User } from "../models/user.model.js"
 
 const createConferencePublication = asyncHandler(async (req, res) => {
     const conferenceData = req.body;
@@ -14,6 +15,22 @@ const createConferencePublication = asyncHandler(async (req, res) => {
     if (!newConference) {
         throw new ApiError(400, "Unable To Create Conference");
     }
+
+    const userId= conferenceData.user;
+    const publicationId = newConference._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User Not Found");
+    }
+    const publication = await Publication.findById(publicationId);
+    if (!publication) {
+        throw new ApiError(404, "Publication Not Found");
+    }
+
+    user.publications.push(publicationId);
+
+    await user.save()
 
     res
         .status(200)
@@ -27,6 +44,21 @@ const createBookChapterPublication = asyncHandler(async (req, res) => {
     if (!newBookChapter) {
         throw new ApiError(400, "Unable To Create Book Chapter");
     }
+    const userId= bookChapterData.user;
+    const publicationId = newBookChapter._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User Not Found");
+    }
+    const publication = await Publication.findById(publicationId);
+    if (!publication) {
+        throw new ApiError(404, "Publication Not Found");
+    }
+    
+    user.publications.push(publicationId);
+
+    await user.save()
 
     res
         .status(200)
@@ -40,6 +72,21 @@ const createBookPublication = asyncHandler(async (req, res) => {
     if (!newBook) {
         throw new ApiError(400, "Unable To Create Book");
     }
+
+    const userId= bookData.user;
+    const publicationId = newBook._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User Not Found");
+    }
+    const publication = await Publication.findById(publicationId);
+    if (!publication) {
+        throw new ApiError(404, "Publication Not Found");
+    }
+    
+    user.publications.push(publicationId);
+    await user.save()
 
     res
         .status(200)
@@ -129,6 +176,21 @@ const createJournalPublication = asyncHandler(async (req, res) => {
     if (!newJournal) {
         throw new ApiError(400, "Unable To Create Journal");
     }
+
+    const userId= journalData.user;
+    const publicationId = newJournal._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User Not Found");
+    }
+    const publication = await Publication.findById(publicationId);
+    if (!publication) {
+        throw new ApiError(404, "Publication Not Found");
+    }
+    
+    user.publications.push(publicationId);
+    await user.save();
 
     res
     .status(200)
