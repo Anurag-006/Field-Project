@@ -7,14 +7,16 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: "http://localhost:5173",
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
 }));
 
 
-app.get("/test", (req, res) => {
-    res.send("This is a test");
+app.post("/test", (req, res) => {
+    res.status(200).json({ message: "Success", data: req.body });
+    console.log(req.body);
 })
 
 app.use("/user",userRouter)

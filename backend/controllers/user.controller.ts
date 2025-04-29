@@ -3,8 +3,9 @@ import { Publication } from "../models/publication.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
-import { Types, Schema } from "mongoose";
+import { Types } from "mongoose";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import { NextFunction, Request, Response } from "express";
 import { IUser, IUserMethods } from "../types/user.types.js";
 
@@ -52,15 +53,44 @@ const generateAccessAndRefreshTokens = async (userId: Types.ObjectId) => {
 
 const createUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const userData = req.body;
+    const existedUser = await User.findOne({
+        $or: [{ employeeId: userData.employeeId }],
+    });
+
+    if (existedUser) {
+        throw new ApiError(409, "User with email or username already exists");
+    }
+
     const newUser = await User.create(userData);
 
-    if (!newUser) {
+    const createdUser = await User.findById(newUser._id).select(
+        "-password -refreshToken"
+    );
+
+    if (!createdUser) {
         throw new ApiError(400, "Unable To Create User");
     }
 
     res
         .status(200)
-        .json(new ApiResponse(200, newUser, "User Added Succesfully"));
+        .json(new ApiResponse(200, createdUser, "User Added Succesfully"));
+});
+
+const insertUsers = asyncHandler(async (req: Request, res: Response) => {
+    try {
+    const users = req.body;
+      const salt = await bcrypt.genSalt(10);
+      for (const user of users) {
+        user.password = await bcrypt.hash(user.password, salt);
+      }
+  
+      const insertedUsers = await User.insertMany(users);
+      res.status(200).json(
+        new ApiResponse(200, insertedUsers, "Users Inserted Successfully")
+      );
+    } catch (error) {
+      console.error("Error inserting users:", error);
+    }
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -370,6 +400,22 @@ const getUserPublicationById = asyncHandler(async (req, res) => {
 }
 );
 
+
+const getCurrentUserPublications = asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!req.user?._id || !Types.ObjectId.isValid(req.user?._id)) {
+        throw new ApiError(400, "Invalid user ID format");
+    }
+
+    const user = await User.findById(req.user?._id).populate("publications");
+
+    if (!user || !user.publications || user.publications.length === 0) {
+        throw new ApiError(404, "No Publications Found");
+    }
+
+    res.status(200).json(new ApiResponse(200, user.publications, "Publications Retrieved Successfully"));
+});
+
+
 export {
     createUser,
     getAllUsers,
@@ -388,4 +434,6 @@ export {
     logoutUser,
     refreshAccessToken,
     changeCurrentPassword,
+    insertUsers,
+    getCurrentUserPublications,    
 };
