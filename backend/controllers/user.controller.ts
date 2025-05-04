@@ -402,17 +402,58 @@ const getUserPublicationById = asyncHandler(async (req, res) => {
 
 
 const getCurrentUserPublications = asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!req.user?._id || !Types.ObjectId.isValid(req.user?._id)) {
-        throw new ApiError(400, "Invalid user ID format");
+    console.log("Starting getCurrentUserPublications");
+    
+    if (!req.user) {
+        console.log("No user found in request");
+        throw new ApiError(401, "User not authenticated");
     }
 
-    const user = await User.findById(req.user?._id).populate("publications");
+    try {
+        console.log("User ID from request:", req.user._id);
+        
+        // Convert string ID to ObjectId if needed
+        const userId = new Types.ObjectId(req.user._id.toString());
+        console.log("Converted ObjectId:", userId);
 
-    if (!user || !user.publications || user.publications.length === 0) {
-        throw new ApiError(404, "No Publications Found");
+        const user = await User.findById(userId)
+            .populate({
+                path: "publications",
+                select: "-__v"
+            })
+            .select("-password -refreshToken");
+        
+        console.log("Found user:", user ? "yes" : "no");
+        console.log("Publications count:", user?.publications?.length || 0);
+
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        // Check if publications exist
+        if (!user.publications || user.publications.length === 0) {
+            console.log("No publications found");
+            return res.status(200).json(
+                new ApiResponse(200, [], "No publications found for user")
+            );
+        }
+
+        console.log("Returning publications");
+        return res.status(200).json(
+            new ApiResponse(
+                200, 
+                user.publications, 
+                "Publications retrieved successfully"
+            )
+        );
+
+    } catch (error) {
+        console.error("Error in getCurrentUserPublications:", error);
+        if (error instanceof Error) {
+            throw new ApiError(400, error.message);
+        }
+        throw new ApiError(500, "Error retrieving publications");
     }
-
-    res.status(200).json(new ApiResponse(200, user.publications, "Publications Retrieved Successfully"));
 });
 
 

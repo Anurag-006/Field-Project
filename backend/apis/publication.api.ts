@@ -40,14 +40,15 @@ publicationRouter.get(
 );
 
 publicationRouter.get(
+    "/type/:type",
+    asyncHandler(getPublicationByType)
+);
+
+publicationRouter.get(
     "/:id",
     asyncHandler(getPublicationById)
 );
 
-publicationRouter.get(
-    "/type/:type",
-    asyncHandler(getPublicationByType)
-);
 publicationRouter.delete(
     "/:id",
     asyncHandler(deletePublication)

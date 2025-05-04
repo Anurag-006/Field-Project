@@ -19,6 +19,7 @@ const asyncHandler = (fn: AsyncRequestHandler) => {
                 success: false,
                 message: error.message
             });
+            // next(error); // Pass the error to the next middleware (error handler)
         }
     };
 };

@@ -1,11 +1,11 @@
 import { Button } from "../ui/button"
 import { useEffect, useState } from "react"
 import PublicationWindow from "../PublicationWindow/PublicationWindow";
-import { IPublication } from "../PublicationCard/PublicationCard";
+import { Publication } from "../../types/publication.types.js";
 import axios from "axios";
 
 const Profile = () => {
-  const [data, setData] = useState<IPublication[]>([])
+  const [data, setData] = useState<Publication[]>([])
   const [showPublications, setShowPublications] = useState(false)
   
   useEffect(()=>{
@@ -21,6 +21,7 @@ const Profile = () => {
           return;
         }
         setData(response.data.data);
+        console.log("Publications fetched successfully:", response.data.data);
       } catch (error) {
         console.error("Error:", error);
       }

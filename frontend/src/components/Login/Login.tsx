@@ -22,7 +22,14 @@ const Login = () => {
           return;
         }
         console.log("Login successful:", response.data);
-        navigate("/profile");
+        const { user } = response.data.data;
+        localStorage.setItem("user", JSON.stringify(user));
+        if (user.role === "admin") {
+          navigate("/");
+        }
+        else if (user.role === "user") {
+          navigate("/");
+        }
       })
       .catch((error) => {
         console.error("Error:", error);
