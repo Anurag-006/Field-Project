@@ -24,12 +24,7 @@ const Login = () => {
         console.log("Login successful:", response.data);
         const { user } = response.data.data;
         localStorage.setItem("user", JSON.stringify(user));
-        if (user.role === "admin") {
-          navigate("/");
-        }
-        else if (user.role === "user") {
-          navigate("/");
-        }
+          navigate("/home");
       })
       .catch((error) => {
         console.error("Error:", error);
